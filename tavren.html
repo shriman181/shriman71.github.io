@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tavren — Franchise Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e0f;
+    --surface: #141517;
+    --surface-2: #1c1e21;
+    --border: #252729;
+    --border-light: #2e3135;
+    --amber: #e8a838;
+    --amber-dim: #b07d20;
+    --amber-glow: rgba(232,168,56,0.12);
+    --text: #e8e6e0;
+    --text-dim: #8a8680;
+    --text-muted: #4a4845;
+    --red: #c84b3a;
+    --green: #3a9e6e;
+    --blue: #4a7fa5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 48px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(13,14,15,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--amber); }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--amber); }
+
+  .nav-cta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--amber);
+    border: none;
+    padding: 9px 20px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 48px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.4;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%);
+  }
+
+  .hero-ticker {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 60px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    animation: ticker-in 0.6s ease forwards;
+    opacity: 0;
+  }
+
+  .ticker-item:nth-child(1) { animation-delay: 0.1s; }
+  .ticker-item:nth-child(2) { animation-delay: 0.2s; }
+  .ticker-item:nth-child(3) { animation-delay: 0.3s; }
+  .ticker-item:nth-child(4) { animation-delay: 0.4s; }
+  .ticker-item:nth-child(5) { animation-delay: 0.5s; }
+
+  @keyframes ticker-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ticker-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .ticker-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .ticker-dot.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .ticker-dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+  .ticker-val { color: var(--text-dim); }
+  .ticker-val.up { color: var(--green); }
+  .ticker-val.down { color: var(--red); }
+
+  .hero-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fade-up 0.7s 0.3s ease forwards;
+  }
+
+  .hero-headline {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    max-width: 900px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fade-up 0.8s 0.45s ease forwards;
+  }
+
+  .hero-headline em {
+    font-style: italic;
+    color: var(--amber);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--text-dim);
+    max-width: 520px;
+    margin-bottom: 52px;
+    opacity: 0;
+    animation: fade-up 0.8s 0.6s ease forwards;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    opacity: 0;
+    animation: fade-up 0.8s 0.75s ease forwards;
+  }
+
+  .btn-primary {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--amber);
+    border: none;
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  .btn-ghost {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border-light);
+    padding: 13px 28px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    opacity: 0;
+    animation: fade-up 0.8s 0.9s ease forwards;
+  }
+
+  .stat-item {}
+
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-num span { color: var(--amber); }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── RIGHT PANEL DASHBOARD MOCKUP ── */
+  .hero-visual {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 420px;
+    opacity: 0;
+    animation: slide-in 1s 0.6s ease forwards;
+  }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(-45%) translateX(20px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+  }
+
+  .dashboard-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface-2);
+  }
+
+  .card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .card-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .badge-live { background: rgba(58,158,110,0.15); color: var(--green); border: 1px solid rgba(58,158,110,0.3); }
+  .badge-alert { background: rgba(200,75,58,0.15); color: var(--red); border: 1px solid rgba(200,75,58,0.3); }
+
+  .card-body { padding: 16px; }
+
+  /* Compliance rows */
+  .compliance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .compliance-row:last-child { border-bottom: none; }
+
+  .cr-left { display: flex; align-items: center; gap: 10px; }
+
+  .cr-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 52px;
+  }
+
+  .cr-name {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .cr-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .score-pass { color: var(--green); }
+  .score-warn { color: var(--amber); }
+  .score-fail { color: var(--red); }
+
+  .cr-bar-wrap {
+    width: 60px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .cr-bar {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 1.5s ease;
+  }
+
+  /* Anomaly mini-chart */
+  .anomaly-chart {
+    position: relative;
+    height: 80px;
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
+  .a-bar {
+    flex: 1;
+    border-radius: 1px 1px 0 0;
+    transition: height 0.3s ease;
+    opacity: 0.7;
+  }
+
+  .a-bar:hover { opacity: 1; }
+  .a-bar.normal { background: var(--border-light); }
+  .a-bar.anomaly { background: var(--red); }
+  .a-bar.highlight { background: var(--amber); }
+
+  .anomaly-label {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--red);
+    letter-spacing: 0.05em;
+  }
+
+  /* Dashboard card 2 */
+  .dashboard-card-2 {
+    margin-top: 10px;
+  }
+
+  .benchmark-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .benchmark-row:last-child { border-bottom: none; }
+
+  .bm-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .bm-values { display: flex; gap: 16px; }
+
+  .bm-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+  }
+
+  .bm-network { color: var(--text-muted); }
+  .bm-unit { color: var(--amber); font-weight: 500; }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION COMMON ── */
+  section { padding: 100px 48px; }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--amber);
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 4vw, 56px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .section-title em { font-style: italic; color: var(--amber); }
+
+  .section-sub {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--text-dim);
+    max-width: 480px;
+  }
+
+  /* ── PROBLEM ── */
+  #problem {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+    margin-top: 60px;
+  }
+
+  .problem-numbers {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pn-item {
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .pn-item.visible { opacity: 1; transform: translateX(0); }
+  .pn-item:first-child { border-top: 1px solid var(--border); }
+
+  .pn-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+  }
+
+  .pn-num span { color: var(--amber); }
+
+  .pn-text {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+
+  .problem-right { padding-top: 8px; }
+
+  .pain-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .pain-card.visible { opacity: 1; transform: translateX(0); }
+
+  .pain-card:hover {
+    border-color: var(--border-light);
+    background: var(--surface-2);
+  }
+
+  .pain-icon {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pain-icon::before {
+    content: '';
+    width: 16px;
+    height: 1px;
+    background: var(--amber);
+    display: inline-block;
+  }
+
+  .pain-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .pain-body {
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--text-dim);
+  }
+
+  /* ── PRODUCT ── */
+  #product { background: var(--bg); }
+
+  .product-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: end;
+    margin-bottom: 64px;
+  }
+
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .module-card {
+    background: var(--bg);
+    padding: 32px 28px;
+    transition: background 0.25s;
+    cursor: default;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease, background 0.25s;
+  }
+
+  .module-card.visible { opacity: 1; transform: translateY(0); }
+  .module-card:hover { background: var(--surface-2); }
+
+  .module-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  .module-icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  .module-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  .module-desc {
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--text-dim);
+  }
+
+  .module-tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    background: var(--amber-glow);
+    color: var(--amber);
+    border: 1px solid rgba(232,168,56,0.2);
+    margin-top: 16px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  #how {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .flow-container {
+    margin-top: 64px;
+    position: relative;
+  }
+
+  .flow-line {
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    right: 28px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-light) 20%, var(--border-light) 80%, transparent);
+  }
+
+  .flow-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    position: relative;
+  }
+
+  .flow-step {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .flow-step.visible { opacity: 1; transform: translateY(0); }
+
+  .step-circle {
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    background: var(--bg);
+    position: relative;
+    z-index: 1;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .flow-step:hover .step-circle {
+    border-color: var(--amber);
+    background: var(--amber-glow);
+  }
+
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: color 0.3s;
+  }
+
+  .flow-step:hover .step-num { color: var(--amber); }
+
+  .step-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .step-desc {
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.65;
+    color: var(--text-dim);
+  }
+
+  /* ── FOUNDER ── */
+  #founder {
+    background: var(--bg);
+  }
+
+  .founder-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .founder-visual {
+    position: relative;
+  }
+
+  .founder-frame {
+    width: 100%;
+    aspect-ratio: 3/4;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .founder-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 40%,
+      rgba(232,168,56,0.04) 60%,
+      transparent 80%
+    );
+  }
+
+  .founder-initials {
+    font-family: 'DM Serif Display', serif;
+    font-size: 96px;
+    color: var(--border-light);
+    letter-spacing: -0.04em;
+    user-select: none;
+  }
+
+  .founder-badge {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    background: rgba(13,14,15,0.9);
+    border: 1px solid var(--border);
+    padding: 16px;
+    backdrop-filter: blur(8px);
+  }
+
+  .founder-badge-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .founder-badge-role {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .founder-accent {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 80px;
+    height: 80px;
+    border-top: 2px solid var(--amber);
+    border-right: 2px solid var(--amber);
+  }
+
+  .founder-content {}
+
+  .founder-quote {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-style: italic;
+    line-height: 1.35;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 36px;
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .founder-quote::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: var(--amber);
+  }
+
+  .founder-bio {
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--text-dim);
+    margin-bottom: 36px;
+  }
+
+  .founder-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .founder-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .founder-tag:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* ── TRACTION / SOCIAL PROOF ── */
+  #traction {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 80px 48px;
+  }
+
+  .traction-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .traction-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 3.5vw, 48px);
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    max-width: 640px;
+  }
+
+  .traction-sub {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text-dim);
+    max-width: 480px;
+    line-height: 1.65;
+    margin-bottom: 60px;
+  }
+
+  .traction-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .tm-item {
+    background: var(--bg);
+    padding: 36px 24px;
+    text-align: center;
+  }
+
+  .tm-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .tm-num span { color: var(--amber); }
+
+  .tm-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── CTA ── */
+  #cta {
+    background: var(--bg);
+    padding: 120px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #cta::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(232,168,56,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .cta-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--text);
+    max-width: 600px;
+    margin: 0 auto 20px;
+  }
+
+  .cta-title em { font-style: italic; color: var(--amber); }
+
+  .cta-sub {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text-dim);
+    max-width: 400px;
+    margin: 0 auto 48px;
+    line-height: 1.65;
+  }
+
+  .cta-form {
+    display: flex;
+    gap: 0;
+    max-width: 440px;
+    margin: 0 auto 20px;
+    border: 1px solid var(--border-light);
+  }
+
+  .cta-input {
+    flex: 1;
+    background: var(--surface);
+    border: none;
+    outline: none;
+    padding: 14px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .cta-input::placeholder { color: var(--text-muted); }
+
+  .cta-input:focus { background: var(--surface-2); }
+
+  .cta-submit {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--amber);
+    border: none;
+    padding: 0 24px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .cta-submit:hover { opacity: 0.88; }
+
+  .cta-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 40px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .footer-logo span { color: var(--amber); }
+
+  .footer-copy {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 28px;
+  }
+
+  .footer-links a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-links a:hover { color: var(--amber); }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--amber-dim); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .hero-visual { display: none; }
+    .problem-grid, .product-header, .founder-layout { grid-template-columns: 1fr; gap: 48px; }
+    .flow-steps { grid-template-columns: repeat(2, 1fr); }
+    .modules-grid { grid-template-columns: repeat(2, 1fr); }
+    .traction-metrics { grid-template-columns: repeat(2, 1fr); }
+    .hero-stats { flex-wrap: wrap; gap: 32px; }
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    section { padding: 72px 24px; }
+    #hero { padding: 100px 24px 60px; }
+    .cta-form { flex-direction: column; }
+    .cta-input { width: 100%; }
+    .cta-submit { padding: 14px; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+    .modules-grid { grid-template-columns: 1fr; }
+    .flow-steps { grid-template-columns: 1fr; }
+    .flow-line { display: none; }
+    .traction-metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">tavren<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#product">Platform</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#founder">Founder</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">Request Access</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+
+  <div class="hero-ticker">
+    <div class="ticker-item">
+      <span class="ticker-dot green"></span>
+      <span>LOC-0041 / Chicago-N</span>
+      <span class="ticker-val up">97.3 COMP</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-dot red"></span>
+      <span>LOC-1182 / Dallas-W</span>
+      <span class="ticker-val down">⚠ ROYALTY ANOMALY</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-dot amber"></span>
+      <span>LOC-0306 / Miami-E</span>
+      <span class="ticker-val">TRAINING 68%</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-dot green"></span>
+      <span>NETWORK AVG</span>
+      <span class="ticker-val up">+4.2% REV</span>
+    </div>
+    <div class="ticker-item">
+      <span class="ticker-dot red"></span>
+      <span>LOC-2205 / Phoenix-S</span>
+      <span class="ticker-val down">AUDIT OVERDUE</span>
+    </div>
+  </div>
+
+  <div class="hero-eyebrow">Franchise Intelligence Platform</div>
+
+  <h1 class="hero-headline">
+    See every unit.<br>
+    <em>Know what's wrong</em><br>
+    before it costs you.
+  </h1>
+
+  <p class="hero-sub">
+    Tavren is the intelligence layer franchise brands have been missing — automated compliance auditing, royalty anomaly detection, and unit economics benchmarking across your entire network.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#cta" class="btn-primary">Request Early Access</a>
+    <a href="#product" class="btn-ghost">See the Platform</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">4<span>,</span>000<span>+</span></div>
+      <div class="stat-label">Franchise Brands Unserved</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">$<span>800</span>B</div>
+      <div class="stat-label">US Franchise Sector Revenue</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">Intelligence Layers Exist Today</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD MOCKUP -->
+  <div class="hero-visual">
+    <div class="dashboard-card">
+      <div class="card-header">
+        <span class="card-title">Compliance Audit — Live</span>
+        <span class="card-badge badge-live">● Live</span>
+      </div>
+      <div class="card-body">
+        <div class="compliance-row">
+          <div class="cr-left">
+            <span class="cr-id">LOC-0041</span>
+            <span class="cr-name">Chicago North</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="cr-bar-wrap"><div class="cr-bar score-pass" style="width:97%;background:var(--green)"></div></div>
+            <span class="cr-score score-pass">97</span>
+          </div>
+        </div>
+        <div class="compliance-row">
+          <div class="cr-left">
+            <span class="cr-id">LOC-0306</span>
+            <span class="cr-name">Miami East</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="cr-bar-wrap"><div class="cr-bar score-warn" style="width:74%;background:var(--amber)"></div></div>
+            <span class="cr-score score-warn">74</span>
+          </div>
+        </div>
+        <div class="compliance-row">
+          <div class="cr-left">
+            <span class="cr-id">LOC-1182</span>
+            <span class="cr-name">Dallas West</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="cr-bar-wrap"><div class="cr-bar score-fail" style="width:41%;background:var(--red)"></div></div>
+            <span class="cr-score score-fail">41</span>
+          </div>
+        </div>
+        <div class="compliance-row">
+          <div class="cr-left">
+            <span class="cr-id">LOC-2205</span>
+            <span class="cr-name">Phoenix South</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="cr-bar-wrap"><div class="cr-bar" style="width:88%;background:var(--green)"></div></div>
+            <span class="cr-score score-pass">88</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-card dashboard-card-2">
+      <div class="card-header">
+        <span class="card-title">Royalty Anomaly Detection</span>
+        <span class="card-badge badge-alert">1 FLAG</span>
+      </div>
+      <div class="card-body">
+        <div class="anomaly-chart">
+          <span class="anomaly-label">↑ +38% deviation</span>
+          <div class="a-bar normal" style="height:30%"></div>
+          <div class="a-bar normal" style="height:45%"></div>
+          <div class="a-bar normal" style="height:40%"></div>
+          <div class="a-bar highlight" style="height:55%"></div>
+          <div class="a-bar normal" style="height:42%"></div>
+          <div class="a-bar normal" style="height:48%"></div>
+          <div class="a-bar anomaly" style="height:85%"></div>
+          <div class="a-bar normal" style="height:44%"></div>
+          <div class="a-bar normal" style="height:39%"></div>
+          <div class="a-bar normal" style="height:46%"></div>
+          <div class="a-bar normal" style="height:41%"></div>
+          <div class="a-bar normal" style="height:50%"></div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="benchmark-row">
+            <span class="bm-label">Network Avg Revenue</span>
+            <div class="bm-values">
+              <span class="bm-val bm-network">$218K</span>
+              <span class="bm-val bm-unit">$186K ↓</span>
+            </div>
+          </div>
+          <div class="benchmark-row">
+            <span class="bm-label">Royalty Rate Reported</span>
+            <div class="bm-values">
+              <span class="bm-val bm-network">5.0%</span>
+              <span class="bm-val" style="color:var(--red)">3.2% ⚠</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-label">The Problem</div>
+  <div class="problem-grid">
+    <div class="problem-numbers">
+      <div class="pn-item">
+        <div class="pn-num">92<span>%</span></div>
+        <div class="pn-text">of franchise operators are managed through spreadsheets, email threads, and manual audits — with no unified intelligence layer watching the network.</div>
+      </div>
+      <div class="pn-item">
+        <div class="pn-num">$<span>3</span>M</div>
+        <div class="pn-text">average annual royalty revenue lost per 200-unit network from unreported or under-reported sales that go undetected without anomaly detection.</div>
+      </div>
+      <div class="pn-item">
+        <div class="pn-num">6<span>mo</span></div>
+        <div class="pn-text">average lag from a compliance violation occurring to a franchise team discovering it through existing manual audit processes.</div>
+      </div>
+    </div>
+    <div class="problem-right">
+      <div class="pain-card">
+        <div class="pain-icon">Compliance</div>
+        <div class="pain-title">Audits are reactive and expensive</div>
+        <div class="pain-body">Field auditors visit locations once or twice a year. Between visits, brand standards erode, health codes get ignored, and training slips — silently, at scale.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">Finance</div>
+        <div class="pain-title">Royalty leakage goes undetected</div>
+        <div class="pain-body">Franchisors have no real-time signal on whether reported POS sales match actual volumes. Sophisticated operators know the gap and exploit it systematically.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">Benchmarking</div>
+        <div class="pain-title">No operator sees their true rank</div>
+        <div class="pain-body">Unit economics benchmarking is done annually in PDF reports. Operators can't see how they compare in real time, and franchisors can't identify the bottom quartile fast enough to intervene.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCT -->
+<section id="product">
+  <div class="product-header">
+    <div>
+      <div class="section-label">The Platform</div>
+      <h2 class="section-title">One intelligence layer.<br><em>Every location.</em></h2>
+    </div>
+    <p class="section-sub">Tavren connects to your existing POS, compliance, and training systems — and surfaces the intelligence your field teams can't generate manually, at the scale they actually need it.</p>
+  </div>
+
+  <div class="modules-grid">
+    <div class="module-card">
+      <div class="module-num">01</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <rect x="4" y="8" width="24" height="18" rx="1" stroke="#e8a838" stroke-width="1.5"/>
+        <path d="M10 14h12M10 18h8" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M14 6v4" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M18 6v4" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div class="module-name">Compliance Auditing</div>
+      <div class="module-desc">Automated daily scoring across brand standards, health codes, and operational checklists. Every location, every day — not once a year.</div>
+      <div class="module-tag">Real-time</div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-num">02</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <path d="M6 24L12 16l5 5 5-8 4 6" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="24" cy="10" r="3" stroke="#e8a838" stroke-width="1.5"/>
+        <path d="M22 10h-2" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div class="module-name">Anomaly Detection</div>
+      <div class="module-desc">ML models trained on historical royalty and POS data detect statistical outliers in reported revenue — flagging under-reporting before it compounds.</div>
+      <div class="module-tag">ML-Powered</div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-num">03</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <rect x="5" y="18" width="5" height="8" rx="0.5" stroke="#e8a838" stroke-width="1.5"/>
+        <rect x="13" y="12" width="5" height="14" rx="0.5" stroke="#e8a838" stroke-width="1.5"/>
+        <rect x="21" y="6" width="5" height="20" rx="0.5" stroke="#e8a838" stroke-width="1.5"/>
+      </svg>
+      <div class="module-name">Unit Benchmarking</div>
+      <div class="module-desc">Live unit economics comparison across the network. Operators see their percentile. Franchisors see their bottom quartile — with drill-down to the root cause.</div>
+      <div class="module-tag">Network-Wide</div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-num">04</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="12" r="5" stroke="#e8a838" stroke-width="1.5"/>
+        <path d="M8 26c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M20 9l3-3M24 12l-3 1" stroke="#e8a838" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <div class="module-name">Training Tracker</div>
+      <div class="module-desc">Completion rates, certification gaps, and at-risk operator identification across every training module — so no location falls through the cracks.</div>
+      <div class="module-tag">Operator-Level</div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-num">05</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <path d="M6 6h8v8H6zM18 6h8v8h-8zM6 18h8v8H6z" stroke="#e8a838" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M18 18h3v3m5-3h-5m0 5v-5" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="module-name">Network Intelligence</div>
+      <div class="module-desc">Cross-location pattern recognition surfaces systemic issues — whether a supply chain problem, regional underperformance, or a specific franchisee cluster at risk.</div>
+      <div class="module-tag">Predictive</div>
+    </div>
+
+    <div class="module-card">
+      <div class="module-num">06</div>
+      <svg class="module-icon" viewBox="0 0 32 32" fill="none">
+        <path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke="#e8a838" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="5" stroke="#e8a838" stroke-width="1.5"/>
+        <circle cx="16" cy="16" r="2" fill="#e8a838"/>
+      </svg>
+      <div class="module-name">Integrations</div>
+      <div class="module-desc">Native connectors for Toast, Square, NCR, and major franchise management platforms. Tavren sits on top of your existing stack — no replacement required.</div>
+      <div class="module-tag">Zero-Friction</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-label">How It Works</div>
+  <h2 class="section-title" style="max-width:500px">From raw data to<br><em>actionable signal</em></h2>
+
+  <div class="flow-container">
+    <div class="flow-line"></div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-circle"><span class="step-num">01</span></div>
+        <div class="step-title">Connect</div>
+        <div class="step-desc">Tavren connects to your POS, LMS, compliance tools, and royalty reporting systems via API or CSV. Onboarding takes under a day.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle"><span class="step-num">02</span></div>
+        <div class="step-title">Ingest</div>
+        <div class="step-desc">Data streams in continuously across every location. Tavren normalizes, reconciles, and builds a unified view of your network in real time.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle"><span class="step-num">03</span></div>
+        <div class="step-title">Analyze</div>
+        <div class="step-desc">ML models score compliance, detect anomalies in financial reporting, and rank every unit against network benchmarks — automatically, daily.</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-circle"><span class="step-num">04</span></div>
+        <div class="step-title">Act</div>
+        <div class="step-desc">Field teams receive prioritized alerts. Operators see their benchmarks. Executives see network health — with the root cause two clicks away.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOUNDER -->
+<section id="founder">
+  <div class="section-label">The Founder</div>
+  <div class="founder-layout">
+    <div class="founder-visual reveal">
+      <div class="founder-frame">
+        <div class="founder-accent"></div>
+        <div class="founder-initials">SJ</div>
+        <div class="founder-badge">
+          <div class="founder-badge-name">Saksham Jain</div>
+          <div class="founder-badge-role">Founder & CEO, Tavren</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="founder-content reveal">
+      <div class="founder-quote">
+        "The franchise industry runs on blind trust. Franchisors hope operators follow the rules. We replace hope with evidence."
+      </div>
+      <p class="founder-bio">
+        Saksham Jain founded Tavren after observing firsthand the operational opacity that plagues multi-unit franchise brands. Having spent years studying the unit economics of distributed retail, he recognized that the intelligence gap between corporate and operator wasn't a technology problem — it was an architectural one. No one had built the layer that sits between raw operational data and the decisions franchise leadership actually needs to make.<br><br>
+        Tavren is Saksham's answer to that gap: a purpose-built intelligence platform that gives franchise brands the visibility they've always lacked — without asking them to rip out the systems they already use.
+      </p>
+      <div class="founder-tags">
+        <span class="founder-tag">Franchise Operations</span>
+        <span class="founder-tag">Unit Economics</span>
+        <span class="founder-tag">SaaS Infrastructure</span>
+        <span class="founder-tag">Compliance Tech</span>
+        <span class="founder-tag">B2B Intelligence</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRACTION -->
+<section id="traction">
+  <div class="traction-inner">
+    <h2 class="traction-title reveal">Built for the scale of modern franchising</h2>
+    <p class="traction-sub reveal">The numbers behind the opportunity Tavren is built to capture.</p>
+    <div class="traction-metrics reveal">
+      <div class="tm-item">
+        <div class="tm-num">790<span>K</span></div>
+        <div class="tm-label">Franchise Locations in the US</div>
+      </div>
+      <div class="tm-item">
+        <div class="tm-num">$<span>2</span>B<span>+</span></div>
+        <div class="tm-label">Est. Annual Royalty Leakage</div>
+      </div>
+      <div class="tm-item">
+        <div class="tm-num">68<span>%</span></div>
+        <div class="tm-label">Brands With No Digital Audit Layer</div>
+      </div>
+      <div class="tm-item">
+        <div class="tm-num">4<span>,</span>200<span>+</span></div>
+        <div class="tm-label">Active Franchise Systems — No Intelligence</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-label">Early Access</div>
+  <h2 class="cta-title">Your network has answers.<br><em>Tavren finds them.</em></h2>
+  <p class="cta-sub">Join franchise operators and brand teams getting early access to the platform. Limited spots available.</p>
+  <div class="cta-form">
+    <input class="cta-input" type="email" placeholder="your@company.com" />
+    <button class="cta-submit">Request Access</button>
+  </div>
+  <div class="cta-note">No commitment. We'll reach out within 48 hours.</div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">tavren<span>.</span></div>
+  <div class="footer-copy">© 2025 Tavren Inc. All rights reserved.</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Intersection Observer for scroll reveals
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        if (entry.target.classList.contains('reveal')) {
+          entry.target.classList.add('visible');
+        }
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.pn-item, .pain-card, .module-card, .flow-step, .reveal').forEach(el => {
+    observer.observe(el);
+  });
+
+  // Stagger module cards
+  document.querySelectorAll('.module-card').forEach((card, i) => {
+    card.style.transitionDelay = `${i * 0.07}s`;
+  });
+
+  // Stagger flow steps
+  document.querySelectorAll('.flow-step').forEach((step, i) => {
+    step.style.transitionDelay = `${i * 0.12}s`;
+  });
+
+  // Stagger pain cards
+  document.querySelectorAll('.pain-card').forEach((card, i) => {
+    card.style.transitionDelay = `${i * 0.1}s`;
+  });
+
+  // Stagger problem numbers
+  document.querySelectorAll('.pn-item').forEach((item, i) => {
+    item.style.transitionDelay = `${i * 0.15}s`;
+  });
+
+  // Animated counter for stats
+  function animateCounter(el) {
+    const text = el.innerText;
+    const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+    if (isNaN(num)) return;
+    const prefix = text.match(/^[^0-9]*/)[0];
+    const suffix = text.match(/[^0-9.]*$/)[0];
+    let start = 0;
+    const duration = 1400;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.innerText = prefix + (num < 10 ? (eased * num).toFixed(1) : Math.round(eased * num)) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.stat-num, .pn-num, .tm-num').forEach(el => {
+          animateCounter(el);
+        });
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('#hero .hero-stats, #problem, #traction').forEach(el => counterObserver.observe(el));
+
+  // CTA form handling
+  document.querySelector('.cta-submit').addEventListener('click', () => {
+    const input = document.querySelector('.cta-input');
+    const email = input.value.trim();
+    if (!email || !email.includes('@')) {
+      input.style.borderBottom = '1px solid var(--red)';
+      setTimeout(() => input.style.borderBottom = '', 1500);
+      return;
+    }
+    const btn = document.querySelector('.cta-submit');
+    btn.textContent = 'Sent ✓';
+    btn.style.background = 'var(--green)';
+    input.value = '';
+    setTimeout(() => {
+      btn.textContent = 'Request Access';
+      btn.style.background = '';
+    }, 3000);
+  });
+</script>
+
+</body>
+</html>
